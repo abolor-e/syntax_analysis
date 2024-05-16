@@ -18,6 +18,34 @@
 # define LINES				100
 # define BISON_AUTOMATON	"./syntax_analysis/parsing_table"
 
+typedef enum e_rules
+{
+	R_PIPE_SEQUENCE = 100,
+	R_SIMPLE_COMMAND,
+	R_CMD_NAME,
+	R_CMD_WORD,
+	R_CMD_PREFIX,
+	R_CMD_SUFFIX,
+	R_IO_REDIRECT,
+	R_IO_FILE,
+	R_FILENAME,
+	R_IO_HERE,
+	R_HERE_END
+}	t_rules;
+
+typedef enum e_ast_types
+{
+	A_CMD = 0,
+	A_RED_TO,
+	A_RED_FROM,
+	A_DLESS,
+	A_DGREAT,
+	A_PIPE,
+	A_PARAM,
+	A_FILE,
+	A_LIMITER
+}	t_ast_types;
+
 typedef struct s_stack
 {
 	int type;
@@ -29,8 +57,8 @@ typedef struct s_stack
 
 typedef struct s_tree
 {
-	struct s_tree	*left;
 	struct s_tree	*right;
+	struct s_tree	*left;
 	struct s_tree	*next;
 	void			*data;
 	int				type;
@@ -141,7 +169,7 @@ int	accept(void);
 t_table *getEntry(t_token *token, t_table **parsing_table, t_stack *stack);
 
 t_stack *init_stack();
-int	shift_to_stack(t_table *table_entry, t_stack **stack, t_token *token);
+//static int	shift_to_stack(t_table *table_entry, t_stack **stack, t_token **token);
 int	change_stack_state(int next_state, t_stack **stack);
 int	reduce_stack(t_table *table_entry, t_tree **tree, t_stack **stack, t_table **pt);
 int	pro_red_next_state(t_stack *stack, t_table **parsing_table);
@@ -149,16 +177,17 @@ int	push_reducted(t_stack **stack, int next);
 t_stack	*pop_oper(t_stack **stack, int reduce);
 void	pop_check(t_stack **red, t_stack *stack);
 
-// t_table	**ft_init_parsing_table(void);
-// int	ft_create_table_state(int fd, t_table **table);
-// static int	free_line_args(char *line, char **args, int code);
-// t_table	*ft_add_table_line(char **arg_line);
-
-t_table	**ms_init_parsing_table(void);
-int	ms_create_all_transitions(int fd, t_table **trans);
+t_table	**ft_init_parsing_table(void);
+int	ft_create_table_state(int fd, t_table **table);
+static int	free_line_args(char *line, char **args, int code);
+t_table	*ft_add_table_line(char **arg_line);
 void	ms_free_table(t_table **trans);
-static t_table	*ms_new_transition(char **args);
-static int	ms_free_line_args(char *line, char **args, int code);
+
+// t_table	**ms_init_parsing_table(void);
+// int	ms_create_all_transitions(int fd, t_table **trans);
+// void	ms_free_table(t_table **trans);
+// static t_table	*ms_new_transition(char **args);
+// static int	ms_free_line_args(char *line, char **args, int code);
 
 int ft_get_next_line(int fd, char **line, int code);
 
@@ -168,5 +197,17 @@ static size_t	ft_slen(const char *s, char c);
 int	ft_atoi(const char *str);
 char	*ft_substr(char const *s, int start, size_t len);
 void	*ft_calloc(size_t count, size_t size);
+
+void	ms_clear_stack(t_stack *stack);
+
+void	ms_parser_cleaning(\
+	t_tree **tree, t_stack *stack, t_token *input, int ret);
+void	ms_clear_tree(t_tree **node);
+void	ms_clear_input(t_token *input);
+
+// int	ms_push_state(t_stack **stack, int state);
+// int	ms_push_input(t_stack **stack, t_token *input);
+// static int	shift_to_stack(int next_state, t_stack **stack, t_token **input);
+
 
 #endif

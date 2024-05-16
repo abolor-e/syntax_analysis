@@ -14,6 +14,7 @@ void	pop_check(t_stack **red, t_stack *stack)
 		(*red)->next = stack;
 		*red = pop;
 	}
+	stack->next = NULL;
 }
 
 t_stack	*pop_oper(t_stack **stack, int reduce)
@@ -34,6 +35,7 @@ t_stack	*pop_oper(t_stack **stack, int reduce)
 			temp = (*stack)->next;
 			pop_check(&red_stack, *stack);
 			*stack = temp;
+			i++;
 		}
 	}
 	return (red_stack);
@@ -75,6 +77,18 @@ int	pro_red_next_state(t_stack *stack, t_table **parsing_table)
 	return (next_state);
 }
 
+void	ms_clear_stack(t_stack *stack)
+{
+	t_stack	*next;
+
+	while (stack)
+	{
+		next = stack->next;
+		free(stack->data);
+		free(stack);
+		stack = next;
+	}
+}
 
 
 int	reduce_stack(t_table *table_entry, t_tree **tree, t_stack **stack, t_table **pt)
@@ -85,16 +99,19 @@ int	reduce_stack(t_table *table_entry, t_tree **tree, t_stack **stack, t_table *
 	pop_stack = pop_oper(stack, table_entry->nb_reduce);
 	if (pop_stack)
 	{
-		if (push_reducted(stack, table_entry->next_state) == 0)
+		if (!push_reducted(stack, table_entry->next_state))
 		{
 			j = pro_red_next_state(*stack, pt);
 			if (!change_stack_state(j, stack))
 			{
 				if (!ms_add_tree(tree, &pop_stack, table_entry->next_state))
-					return (0); // free
+				{
+					ms_clear_stack(pop_stack);
+					return (0);
+				}
 			}
 		}
-		//free
+		ms_clear_stack(pop_stack);
 	}
 	return (-1);
 }
@@ -102,6 +119,24 @@ int	reduce_stack(t_table *table_entry, t_tree **tree, t_stack **stack, t_table *
 /*
 Stack has pushed input and another stack element with next state
 change_stack_state creates an element with the next state to go in the pt*/
+
+// int	ms_push_state(t_stack **stack, int state)
+// {
+// 	t_stack	*new;
+
+// 	if (state == -1)
+// 		return (-1);
+// 	new = (t_stack *)malloc(sizeof(*new));
+// 	if (!new)
+// 		return (-1);
+// 	new->type = -1;
+// 	new->state = state;
+// 	new->data = NULL;
+// 	new->next = *stack;
+// 	*stack = new;
+// 	return (0);
+// }
+
 int	change_stack_state(int next_state, t_stack **stack)
 {	
 	t_stack	*new_stack;
@@ -121,27 +156,24 @@ int	change_stack_state(int next_state, t_stack **stack)
 1. Pushes an element to the stack
 2. Creates new stack element which will be the next element (change of state)
 */
-int	shift_to_stack(t_table *table_entry, t_stack **stack, t_token *token)
-{
-	t_stack	*new_stack;
 
-	new_stack = (t_stack *)malloc(sizeof(*new_stack));
-	if (!new_stack)
-		return (-1);
-	new_stack->state = -1;
-	new_stack->type = token->type;
-	new_stack->data = token->value;
-	token->value = NULL;
-	new_stack->quote = token->quote;
-	new_stack->next = *stack;
-	*stack = new_stack;
-	if (table_entry->state == -1)
-		return (-1);
-	if (change_stack_state(table_entry->next_state, stack) == -1)
-		return (-1);
-	token = token->next;
-	return (0);
-}
+// int	ms_push_input(t_stack **stack, t_token *input)
+// {
+// 	t_stack	*new;
+
+// 	new = (t_stack *)malloc(sizeof(*new));
+// 	if (!new)
+// 		return (-1);
+// 	new->type = input->type;
+// 	new->quote = input->quote;
+// 	new->state = -1;
+// 	new->data = input->value;
+// 	input->value = NULL;
+// 	new->next = *stack;
+// 	*stack = new;
+// 	return (0);
+// }
+
 
 /*Initialize the stack:
 Stack is needed to use the reduce and shift method

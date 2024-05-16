@@ -132,3 +132,54 @@ void	*ft_calloc(size_t count, size_t size)
 		temp[i++] = 0;
 	return (res);
 }
+
+/*
+** CLEAR INPUT
+** At the end of the parser or if an error occurs during the parsing.
+*/
+
+void	ms_clear_input(t_token *input)
+{
+	t_token	*next;
+
+	while (input)
+	{
+		next = input->next;
+		free(input->value);
+		free(input);
+		input = next;
+	}
+}
+
+/*
+** CLEAR TREE
+** At the end of the parser or if an error occurs during the parsing.
+*/
+
+void	ms_clear_tree(t_tree **node)
+{
+	if (*node)
+	{
+		ms_clear_tree(&(*node)->left);
+		ms_clear_tree(&(*node)->right);
+		if (!(*node)->left && !(*node)->right)
+		{
+			free((*node)->data);
+			free(*node);
+			*node = NULL;
+		}
+	}
+}
+
+/*
+** PARSER CLEANING
+*/
+
+void	ms_parser_cleaning(\
+	t_tree **tree, t_stack *stack, t_token *input, int ret)
+{
+	if (ret == -1)
+		ms_clear_tree(tree);
+	ms_clear_stack(stack);
+	ms_clear_input(input);
+}

@@ -1,113 +1,195 @@
 #include "../minishell.h"
 #include "../gnl.h"
 
-void	prep_for_next_line(t_list **list)
+static int	ft_fill_buffer_until_n(char **bufline, int fd)
 {
-	t_list	*last_node;
-	t_list	*new_node;
-	char	*str;
-	int		i;
-	int		a;
+	char	*buf;
+	int		linelen;
+	int		ret;
 
-	a = 0;
-	i = 0;
-	str = malloc(BUFFER_SIZE + 1);
-	last_node = ft_lstlast(*list);
-	new_node = malloc(sizeof(t_list));
-	if (!new_node || !str)
-		return ;
-	while (last_node->str_buf[i] && last_node->str_buf[i] != '\n')
-		++i;
-	while (last_node->str_buf[i] && last_node->str_buf[++i])
-		str[a++] = last_node->str_buf[i];
-	str[a] = '\0';
-	new_node->str_buf = str;
-	new_node->next = NULL;
-	free_list(list, new_node, str);
+	buf = (char *)malloc(sizeof(*buf) * (BUFFER_SIZE + 1));
+	if (!buf)
+		return (-1);
+	while (!ft_strchr(*bufline, '\n'))
+	{
+		ret = read(fd, buf, BUFFER_SIZE);
+		if (ret == 0 || ret == -1)
+		{
+			free(buf);
+			return (ret);
+		}
+		buf[ret] = '\0';
+		linelen = (ft_strchr(*bufline, 0) - *bufline) + ret + 1;
+		*bufline = ft_realloc(*bufline, linelen);
+		ft_strlcat(*bufline, buf, linelen);
+	}
+	free(buf);
+	return (1);
 }
 
-char	*get_until_newline(t_list *list)
+static int	ft_update_bufline(char **bufline)
 {
-	char	*new_str;
-	int		str_len;
+	char	*tofree;
+	int		nl_index;
 
-	if (!list)
-		return (NULL);
-	str_len = len_until_newline(list);
-	new_str = malloc(str_len + 1);
-	if (!new_str)
-		return (NULL);
-	copy(list, new_str);
-	return (new_str);
+	tofree = *bufline;
+	nl_index = ft_strchr(*bufline, '\n') - *bufline;
+	*bufline = ft_substr(*bufline, nl_index + 1, \
+		(ft_strchr(*bufline, 0) - *bufline) - (nl_index + 1));
+	if (!*bufline)
+	{
+		*bufline = tofree;
+		return (-1);
+	}
+	free(tofree);
+	return (0);
 }
 
-void	include_list(t_list **list, char *res)
+static int	ft_return_line(char **line, char **bufline, int status)
 {
-	t_list	*new_node;
-	t_list	*last_node;
+	int		nl_index;
 
-	new_node = malloc(sizeof(t_list));
-	if (!new_node)
-		return ;
-	last_node = ft_lstlast(*list);
-	if (last_node == NULL)
-		*list = new_node;
+	if (status == -1)
+		return (-1);
+	if (status == 0)
+	{
+		*line = ft_substr(*bufline, 0, ft_strchr(*bufline, 0) - *bufline);
+		if (!*line)
+			return (-1);
+		return (0);
+	}
 	else
-		last_node->next = new_node;
-	new_node->str_buf = res;
-	new_node->next = NULL;
-}
-
-void	create_buffer_list(t_list **list, int fd)
-{
-	char	*res;
-	int		char_read;
-
-	while (!newline_check_list(*list))
 	{
-		res = malloc(BUFFER_SIZE + 1);
-		if (!res)
-			return ;
-		char_read = read(fd, res, BUFFER_SIZE);
-		if (!char_read)
-		{
-			free(res);
-			return ;
-		}
-		else if (char_read < 0)
-		{
-			free(res);
-			if (list)
-				free_list(list, NULL, NULL);
-			return ;
-		}
-		res[char_read] = '\0';
-		include_list(list, res);
+		nl_index = ft_strchr(*bufline, '\n') - *bufline;
+		*line = ft_substr(*bufline, 0, nl_index);
+		if (!*line)
+			return (-1);
+		if (ft_update_bufline(bufline) == -1)
+			return (-1);
+		return (1);
 	}
 }
 
-char	*get_next_line(int fd)
+static int	ft_init_bufline(char **bufline)
 {
-	char			*next_line;
-	static t_list	*list = NULL;
-
-	if (fd < 0 || BUFFER_SIZE <= 0)
-		return (NULL);
-	create_buffer_list(&list, fd);
-	if (list == NULL)
-		return (NULL);
-	next_line = get_until_newline(list);
-	if (!next_line)
+	if (!*bufline)
 	{
-		free_list(&list, NULL, NULL);
-		return (NULL);
+		*bufline = (char *)malloc(sizeof(**bufline) * (BUFFER_SIZE + 1));
+		if (!*bufline)
+			return (-1);
+		*bufline[0] = 0;
 	}
-	prep_for_next_line(&list);
-	return (next_line);
+	return (0);
 }
 
-int ft_get_next_line(int fd, char **line, int code)
+int	ft_get_next_line(int fd, char **line, int to_free)
 {
-    *line = get_next_line(fd);
-    return (code);
+	static char	*bufline = NULL;
+	int			result;
+
+	if (to_free)
+	{
+		free(bufline);
+		return (0);
+	}
+	if (fd < 0 || !line || BUFFER_SIZE <= 0 || ft_init_bufline(&bufline) == -1)
+		return (-1);
+	result = ft_fill_buffer_until_n(&bufline, fd);
+	if (ft_return_line(line, &bufline, result) == -1)
+	{
+		free(bufline);
+		bufline = NULL;
+		return (-1);
+	}
+	if (result == 0)
+	{
+		free(bufline);
+		bufline = NULL;
+	}
+	return (result);
+}
+
+char	*ft_strchr(const char *s, int c)
+{
+	if (!s)
+		return (NULL);
+	while (*s)
+	{
+		if (*s == (char)c)
+			return ((char *)s);
+		++s;
+	}
+	if (c == 0)
+		return ((char *)s);
+	return (NULL);
+}
+
+void	*ft_realloc(void *ptr, size_t size)
+{
+	char	*new;
+
+	if (!ptr || size == 0)
+	{
+		if (size == 0)
+			size = 1;
+		new = (char *)malloc(sizeof(*new) * size);
+		if (!new)
+		{
+			free(ptr);
+			return (NULL);
+		}
+		return (new);
+	}
+	new = (char *)malloc(sizeof(*new) * size);
+	if (!new)
+	{
+		free(ptr);
+		return (NULL);
+	}
+	new = ft_strcpy(new, ptr);
+	free(ptr);
+	return (new);
+}
+
+size_t	ft_strlcat(char *dst, const char *src, size_t dstsize)
+{
+	size_t	s_len;
+	size_t	d_len;
+	size_t	i;
+	size_t	result;
+
+	i = 0;
+	s_len = ft_strlen(src);
+	d_len = ft_strlen(dst);
+	if (dstsize >= d_len)
+		result = s_len + d_len;
+	else
+		result = s_len + dstsize;
+	if (dstsize > d_len)
+	{
+		while (src[i] && d_len < dstsize - 1)
+		{
+			dst[d_len] = src[i];
+			++d_len;
+			++i;
+		}
+	}
+	dst[d_len] = '\0';
+	return (result);
+}
+
+char	*ft_strcpy(char *dst, const char *src)
+{
+	size_t	i;
+
+	i = -1;
+	if (!src)
+	{
+		dst[0] = 0;
+		return (dst);
+	}
+	while (src[++i])
+		dst[i] = src[i];
+	dst[i] = '\0';
+	return (dst);
 }

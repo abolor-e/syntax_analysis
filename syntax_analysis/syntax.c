@@ -1,5 +1,27 @@
 #include "../minishell.h"
 
+static int	shift_to_stack(t_table *table_entry, t_stack **stack, t_token **token)
+{
+	t_stack	*new_stack;
+
+	new_stack = (t_stack *)malloc(sizeof(*new_stack));
+	if (!new_stack)
+		return (-1);
+	new_stack->state = -1;
+	new_stack->type = (*token)->type;
+	new_stack->data = (*token)->value;
+	(*token)->value = NULL;
+	new_stack->quote = (*token)->quote;
+	new_stack->next = *stack;
+	*stack = new_stack;
+	if (table_entry->state == -1)
+		return (-1);
+	if (change_stack_state(table_entry->next_state, stack) == -1)
+		return (-1);
+	(*token) = (*token)->next;
+	return (0);
+}
+
 /*
 Takes the entry with state 0 (common convention) and type as token type!
 if not token type by default type -1: default choice -1!
@@ -19,7 +41,7 @@ t_table *getEntry(t_token *token, t_table **parsing_table, t_stack *stack)
 	//check if we need to add protection when the stack is NULL!
 	if (token != NULL)
 		t_type = token->type;
-	while (parsing_table[++i] && !parsing_table)
+	while (parsing_table[++i])
 	{
 		if (parsing_table[i]->state == stack->state)
 		{
@@ -50,16 +72,16 @@ static void	ms_visit_fix_types(t_tree *node)
 {
 	if (!node)
 		return ;
-	if (node->reduc == 108)
-		node->right->type = 7;
-	if (node->reduc == 110)
-		node->right->type = 8;
-	if (node->reduc > 3)
+	if (node->reduc == R_FILENAME)
+		node->right->type = A_FILE;
+	if (node->reduc == R_HERE_END)
+		node->right->type = A_LIMITER;
+	if (node->reduc > R_CMD_WORD)
 	{
-		if (node->left && node->left->type == 0)
-			node->left->type = 6;
-		if (node->right && node->right->type == 0)
-			node->right->type = 6;
+		if (node->left && node->left->type == A_CMD)
+			node->left->type = A_PARAM;
+		if (node->right && node->right->type == A_CMD)
+			node->right->type = A_PARAM;
 	}
 	ms_visit_fix_types(node->left);
 	ms_visit_fix_types(node->right);
@@ -77,6 +99,17 @@ t_tree	*ms_fix_param_types(t_tree *tree)
 1. Returns AST built checking the parsing table (syntax) 
 2. Uses shift and reduce method
 */
+
+// static int	shift_to_stack(int next_state, t_stack **stack, t_token **input)
+// {
+// 	if (ms_push_input(stack, *input) == -1)
+// 		return (-1);
+// 	if (ms_push_state(stack, next_state) == -1)
+// 		return (-1);
+// 	*input = (*input)->next;
+// 	return (0);
+// }
+
 t_tree	*syntax_analysis(t_token *token, t_table **parsing_table)
 {
 	t_tree	*tree;
@@ -92,8 +125,9 @@ t_tree	*syntax_analysis(t_token *token, t_table **parsing_table)
 	while (i == 0)
 	{
 		table_entry = getEntry(token, parsing_table, stack);
+		printf("%d, %d, %d, %d, %d\n", table_entry->state, table_entry->token_type, table_entry->action, table_entry->next_state, table_entry->nb_reduce);
 		if (table_entry != NULL && table_entry->action == SHIFT_TO_STACK)
-			i = shift_to_stack(table_entry, &stack, token);
+			i = shift_to_stack(table_entry, &stack, &token);
 		else if (table_entry != NULL && table_entry->action == REDUCE_STACK)
 			i = reduce_stack(table_entry, &tree, &stack, parsing_table);
 		else if (table_entry != NULL && table_entry->action == ACCEPT)
@@ -101,6 +135,6 @@ t_tree	*syntax_analysis(t_token *token, t_table **parsing_table)
 		else
 			i = reject();
 	}
-	//ms_parser_cleaning(&tree, stack, input_begin, i);
+	ms_parser_cleaning(&tree, stack, input_begin, i);
 	return (ms_fix_param_types(tree));
 }
