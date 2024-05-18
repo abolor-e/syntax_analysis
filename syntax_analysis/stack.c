@@ -19,8 +19,8 @@ void	pop_check(t_stack **red, t_stack *stack)
 
 t_stack	*pop_oper(t_stack **stack, int reduce)
 {
-	t_stack	*temp;
-	t_stack	*red_stack;
+	t_stack	*temp = NULL;
+	t_stack	*red_stack = NULL;
 	int		i;
 
 	i = 0;
@@ -79,7 +79,7 @@ int	pro_red_next_state(t_stack *stack, t_table **parsing_table)
 
 void	ms_clear_stack(t_stack *stack)
 {
-	t_stack	*next;
+	t_stack	*next = NULL;
 
 	while (stack)
 	{
@@ -93,7 +93,7 @@ void	ms_clear_stack(t_stack *stack)
 
 int	reduce_stack(t_table *table_entry, t_tree **tree, t_stack **stack, t_table **pt)
 {
-	t_stack	*pop_stack;
+	t_stack	*pop_stack = NULL;
 	int	j;
 
 	pop_stack = pop_oper(stack, table_entry->nb_reduce);

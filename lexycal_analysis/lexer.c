@@ -49,7 +49,7 @@ Returns a token created from the string part
 */
 t_token *token_cre(int token_len, char *line, char *exit)
 {
-    t_token *token;
+    t_token *token = NULL;
     int q;
     char    *str;
 
@@ -61,7 +61,7 @@ t_token *token_cre(int token_len, char *line, char *exit)
 
 t_token *token_creation(int token_len, char *str, char *exit, int *q)
 {
-    t_token *token;
+    t_token *token = NULL;
     int     i;
     char    new[1000];
     int     i_new;
@@ -93,8 +93,8 @@ Returns singly linked list which has tokens
 t_token *ft_lexer(char *line)// might add exit code!
 {
     int         token_len;
-    t_token     *token;
-    t_token     *all;
+    t_token     *token = NULL;
+    t_token     *all = NULL;
     int         status;
     char        *exit;
     t_sdQuote   sdQuote;

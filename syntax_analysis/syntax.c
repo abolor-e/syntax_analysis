@@ -113,7 +113,7 @@ t_tree	*ms_fix_param_types(t_tree *tree)
 t_tree	*syntax_analysis(t_token *token, t_table **parsing_table)
 {
 	t_tree	*tree;
-	t_table	*table_entry;
+	t_table	*table_entry = NULL;
 	t_stack	*stack;
 	t_token	*input_begin;
 	int		i;
@@ -125,7 +125,7 @@ t_tree	*syntax_analysis(t_token *token, t_table **parsing_table)
 	while (i == 0)
 	{
 		table_entry = getEntry(token, parsing_table, stack);
-		printf("%d, %d, %d, %d, %d\n", table_entry->state, table_entry->token_type, table_entry->action, table_entry->next_state, table_entry->nb_reduce);
+		// printf("%d, %d, %d, %d, %d\n", table_entry->state, table_entry->token_type, table_entry->action, table_entry->next_state, table_entry->nb_reduce);
 		if (table_entry != NULL && table_entry->action == SHIFT_TO_STACK)
 			i = shift_to_stack(table_entry, &stack, &token);
 		else if (table_entry != NULL && table_entry->action == REDUCE_STACK)

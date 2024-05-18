@@ -10,11 +10,11 @@ int main(void)
     inp = readline("");
     input = ft_lexer(inp);
     parsing_table = ft_init_parsing_table();
-    printf("%d, %d, %d\n", input->type, input->next->type, input->next->next->type);
+    //printf("%d, %d, %d\n", input->type, input->next->type, input->next->next->type);
     tree = syntax_analysis(input, parsing_table);
     if (!tree)
-        printf("hello\n");
+        printf("Tree is NULL\n");
     //printf("%d, %d, %d\n", tree->type, tree->right->type, tree->left->type);
-    printf("%d, %d\n", tree->type, tree->right->type);
+    //printf("%d, %d\n", tree->type, tree->right->type);
     // printf("%d, %d, %d\n", tree->type, tree->left->type, tree->left->right->type);
 }

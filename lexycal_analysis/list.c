@@ -20,7 +20,7 @@ t_ttypes	catego_toketype(char *content, int c)
 
 void	ft_tokenadd_back(t_token **lst, t_token *new)
 {
-	t_token	*current;
+	t_token	*current = NULL;
 
 	if (!(*lst))
 	{
@@ -37,7 +37,7 @@ void	ft_tokenadd_back(t_token **lst, t_token *new)
 
 t_token	*ft_newtoken(void *content, int c)
 {
-	t_token		*re;
+	t_token		*re = NULL;
 
 	re = (t_token *)malloc(sizeof(t_token));
 	if (!re)

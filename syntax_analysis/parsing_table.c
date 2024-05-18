@@ -78,7 +78,7 @@ int	ft_create_table_state(int fd, t_table **table)
 
 void	ms_free_table(t_table **trans)
 {
-	t_table	**begin;
+	t_table	**begin = NULL;
 
 	if (trans)
 	{
@@ -119,10 +119,10 @@ t_table	**ft_init_parsing_table(void)
 	}
 	close(fd);
     int i = 0;
-    while (table[i])
-	{
-		printf("%d, %d, %d, %d, %d\n", table[i]->state, table[i]->token_type, table[i]->action, table[i]->next_state, table[i]->nb_reduce);
-		i++;
-	}
+    // while (table[i])
+	// {
+	// 	printf("%d, %d, %d, %d, %d\n", table[i]->state, table[i]->token_type, table[i]->action, table[i]->next_state, table[i]->nb_reduce);
+	// 	i++;
+	// }
 	return (table);
 }

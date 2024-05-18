@@ -33,8 +33,8 @@ t_tree	*ms_stack_to_node(t_stack *popped)
 
 void	ms_remove_node_from_list(t_tree **tree, t_tree *node)
 {
-	t_tree	*previous;
-	t_tree	*tmp;
+	t_tree	*previous = NULL;
+	t_tree	*tmp = NULL;
 
 	if (*tree == node)
 	{
@@ -119,7 +119,7 @@ t_tree	*ms_add_reduction_front(t_tree **tree, int reduction)
 int	ms_build_tree(t_tree **tree, t_tree *reduc_node, t_stack **popped)
 {
 	int		i;
-	t_tree	*child;
+	t_tree	*child = NULL;
 	t_stack	*begin;
 
 	i = -1;
@@ -152,7 +152,7 @@ int	ms_build_tree(t_tree **tree, t_tree *reduc_node, t_stack **popped)
 
 int	ms_add_tree(t_tree **tree, t_stack **popped, int reduction)
 {
-	t_tree	*reduc_node;
+	t_tree	*reduc_node = NULL;
 
 	reduc_node = ms_add_reduction_front(tree, reduction);
 	if (reduc_node)

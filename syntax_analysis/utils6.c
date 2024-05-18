@@ -140,7 +140,7 @@ void	*ft_calloc(size_t count, size_t size)
 
 void	ms_clear_input(t_token *input)
 {
-	t_token	*next;
+	t_token	*next = NULL;
 
 	while (input)
 	{
